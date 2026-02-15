@@ -29,7 +29,9 @@ public class Main {
 
         for(int step = 1; step <= 3000; step++) { //main loop
 
-            if(processor.getCurrentProcess() == null) {
+            if(processor.getCurrentProcess() == null) { //Otherwise the process remains on the processor and the next
+                // iteration of the loop will execute its next
+                instruction.
                 if(!readyQueue.isEmpty()) {
                     ProcessControlBlock nextPCB = readyQueue.poll();
 
@@ -52,12 +54,12 @@ public class Main {
                 } else {
                     System.out.println("Step " + step + " SysIdle Notification: No ready processes available");
                 }
-            } else {
+            } else { //if the code goes here we need to do a context switch
                 System.out.print("Step " + step + " ");
                 ProcessState result = processor.executeNextInstruction();
                 instructionsExecuted++;
 
-                if(result == ProcessState.FINISHED) {
+                if(result == ProcessState.FINISHED) {//The process has finished, in this case it does not run again
                     System.out.println("*** Process completed ***");
 
                     System.out.println("Step " + step + " SYS CONTX SWTCH : Saving process: "
@@ -66,7 +68,10 @@ public class Main {
                     processor.setCurrentProcess(null);
                     instructionsExecuted = 0;
 
-                } else if(result == ProcessState.BLOCKED) {
+                }
+                else if(result == ProcessState.BLOCKED) { //The process has blocked, in this case it is put on the
+                    // blocked list and is not run again until it is
+                    ready
                     System.out.println("*** Process blocked ***");
 
                     ProcessControlBlock currentPCB = findPCB(pcbs, processor.getCurrentProcess());
@@ -89,7 +94,9 @@ public class Main {
                     processor.setCurrentProcess(null);
                     instructionsExecuted = 0;
 
-                } else if(instructionsExecuted >= QUANTUM) {
+                }
+                else if(instructionsExecuted >= QUANTUM) { //The process has run for a full quantum, in this case it
+                    // goes back on the ready list
                     System.out.println("*** Quantum expired ***");
 
                     ProcessControlBlock currentPCB = findPCB(pcbs, processor.getCurrentProcess());
@@ -113,7 +120,14 @@ public class Main {
                     instructionsExecuted = 0;
                 }
             }
-
+            /**
+             * 
+             * After performing a step, regardless of whether it is an instruction execution or a context switch, you
+             * should loop through all of the blocked processes and for each one, wake it up with 30% probability. This
+             * loop should run ONLY ONCE per iteration of the main loop, even if there is no ready process and the
+             * processor is idling.
+             *
+             */
             Queue<ProcessControlBlock> stillBlocked = new LinkedList<>();
             while(!blockedQueue.isEmpty()) {
                 ProcessControlBlock blockedPCB = blockedQueue.poll();
